@@ -65,6 +65,33 @@ def simular_motor(kp, ti, td, setpoint):
     return tempo, velocidade, pwm
 
 
+# Calcula os tempos de subida e acomodação e o pico da resposta.
+def calcular_metricas(tempo, velocidade, pwm, setpoint):
+    pico_indice = int(np.argmax(velocidade))
+    pico = float(velocidade[pico_indice])
+    overshoot = max(0.0, (pico - setpoint) / setpoint * 100) if setpoint > 0 else 0.0
+    resultado = dict(pico=pico, tempo_pico=float(tempo[pico_indice]),
+                     overshoot=overshoot, pwm_final=float(pwm[-1]),
+                     tr=None, ts=None, t10=None, t90=None)
+
+    if setpoint <= 0:
+        return resultado
+
+    indices_10 = np.flatnonzero(velocidade >= 0.1 * setpoint)
+    indices_90 = np.flatnonzero(velocidade >= 0.9 * setpoint)
+    if len(indices_10) and len(indices_90):
+        t10 = float(tempo[indices_10[0]])
+        t90 = float(tempo[indices_90[0]])
+        resultado.update(t10=t10, t90=t90, tr=t90 - t10)
+
+    fora_faixa = np.flatnonzero(np.abs(velocidade - setpoint) > 0.02 * setpoint)
+    if len(fora_faixa) == 0:
+        resultado['ts'] = 0.0
+    elif fora_faixa[-1] < len(tempo) - 1:
+        resultado['ts'] = float(tempo[fora_faixa[-1] + 1])
+    return resultado
+
+
 class Janela(QMainWindow):
     # Inicializa a janela principal.
     def __init__(self):
@@ -166,30 +193,46 @@ class Janela(QMainWindow):
         tempo, velocidade, pwm = simular_motor(
             self.kp.value(), self.ti.value(), self.td.value(), setpoint
         )
-        self.atualizar_grafico(tempo, velocidade, setpoint)
-        self.atualizar_metricas(velocidade, pwm, setpoint)
+        metricas = calcular_metricas(tempo, velocidade, pwm, setpoint)
+        self.atualizar_grafico(tempo, velocidade, setpoint, metricas)
+        self.atualizar_metricas(metricas)
 
-    # Desenha a velocidade e o SetPoint no gráfico.
-    def atualizar_grafico(self, tempo, velocidade, setpoint):
+    # Desenha a resposta e marca os pontos importantes no gráfico.
+    def atualizar_grafico(self, tempo, velocidade, setpoint, metricas):
         self.figura.clear()
         eixo = self.figura.add_subplot(111)
         eixo.plot(tempo, velocidade, label='Velocidade simulada (RPM)')
         eixo.axhline(setpoint, linestyle='--', label='SetPoint')
+
+        eixo.plot(metricas['tempo_pico'], metricas['pico'], 'ro', label='Pico')
+        if metricas['t10'] is not None:
+            eixo.plot(metricas['t10'], 0.1 * setpoint, 'o', label='10% SP')
+            eixo.plot(metricas['t90'], 0.9 * setpoint, 'o', label='90% SP')
+            eixo.axvspan(metricas['t10'], metricas['t90'], alpha=0.08)
+        if metricas['ts'] is not None:
+            eixo.axvline(metricas['ts'], linestyle=':', label=f"ts = {metricas['ts']:.2f} s")
+            eixo.plot(metricas['ts'], np.interp(metricas['ts'], tempo, velocidade), 's')
+
+        if setpoint > 0:
+            eixo.axhspan(0.98 * setpoint, 1.02 * setpoint, alpha=0.07)
         eixo.set_xlabel('Tempo (s)')
         eixo.set_ylabel('Velocidade (RPM)')
         eixo.set_title('Resposta em malha fechada')
         eixo.grid(True, alpha=0.3)
-        eixo.legend()
+        eixo.legend(fontsize=8)
         self.figura.tight_layout()
         self.canvas.draw()
 
-    # Mostra as métricas da simulação.
-    def atualizar_metricas(self, velocidade, pwm, setpoint):
-        pico = float(np.max(velocidade))
-        overshoot = max(0.0, (pico - setpoint) / setpoint * 100) if setpoint > 0 else 0.0
+    # Mostra os tempos e os demais resultados da simulação.
+    def atualizar_metricas(self, metricas):
+        tr = f"{metricas['tr']:.2f} s" if metricas['tr'] is not None else 'Não atingido'
+        ts = f"{metricas['ts']:.2f} s" if metricas['ts'] is not None else 'Não acomodou em 60 s'
         self.metricas.setText(
-            f'Pico: {pico:.1f} RPM | Overshoot: {overshoot:.1f}% '
-            f'| PWM final: {pwm[-1]:.1f}%'
+            f"Tempo de subida (tr): {tr}\n"
+            f"Tempo de acomodação (ts): {ts}\n"
+            f"Pico: {metricas['pico']:.1f} RPM\n"
+            f"Overshoot: {metricas['overshoot']:.1f}%\n"
+            f"PWM final: {metricas['pwm_final']:.1f}%"
         )
 
     # Salva o gráfico em uma imagem PNG.
