@@ -46,13 +46,13 @@ As faixas de operação são apresentadas na tabela abaixo:
 
 ### 1. Identificação do conjunto de dados
 
-Os dados utilizados foram os do `Dataset Grupo6` (`Motor_G6.mat`), obtidos por um Ensaio da Curva de Reação: um degrau de 50% é aplicado à entrada do motor em t = 5 s, e a velocidade de saída (RPM) é registrada ao longo de 60 s, com ruído de medição.
+Os dados utilizados foram os do `Dataset Grupo6` (`Motor_G6.mat`), obtidos por um Ensaio da Curva de Reação. Um degrau de 50% é aplicado à entrada do motor em t = 5 s, e a velocidade de saída (RPM) é registrada ao longo de 60 s, com ruído de medição.
 
 ![Dados brutos do ensaio](identificacao/dados_brutos_grupo6.png)
 
 ### 2. Escolha do método de identificação
 
-Entre os métodos de Smith e Sundaresan, optou-se pelo **método de Sundaresan**, pois ele não depende de uma tangente no ponto de inflexão da curva (diferente do método de Smith) e é indicado para amostras com maior presença de ruído — característica presente neste dataset.
+Entre os métodos de Smith e Sundaresan, optou-se pelo método de Sundaresan, pois ele não depende de uma tangente no ponto de inflexão da curva, ao contrário do método de Smith, e é indicado para amostras com maior presença de ruído, característica presente neste dataset.
 
 A partir dos instantes em que a resposta cruza 35,3% e 85,3% do valor final, foram obtidos os parâmetros do modelo FOPDT:
 
@@ -66,7 +66,7 @@ A partir dos instantes em que a resposta cruza 35,3% e 85,3% do valor final, for
 
 O modelo foi construído em série com uma aproximação de Padé de ordem 10 para o atraso de transporte, e sua resposta ao degrau foi comparada com os dados experimentais:
 
-![Identificação Sundaresan - comparação real x estimado](identificacao/identificacao_grupo6.png)
+![Identificação Sundaresan, comparação real x estimado](identificacao/identificacao_grupo6.png)
 
 A curva estimada acompanha de perto os dados reais, validando a identificação sem necessidade de ajuste fino adicional.
 
@@ -76,7 +76,7 @@ Comparando a resposta ao degrau unitário do modelo identificado em malha aberta
 
 ![Malha aberta x malha fechada](identificacao/malha_aberta_fechada_grupo6.png)
 
-Em malha aberta, o sistema é estável e atinge o regime permanente suavemente (y ≈ k), sem erro, pois é apenas a resposta da planta ao degrau. Já em malha fechada sem controlador, o sistema diverge — o ganho estático elevado (k ≈ 18) combinado ao atraso de transporte (θ ≈ 0,95 s) leva a malha além do limite de estabilidade, oscilando com amplitude crescente. Não há, portanto, tr/ts/erro de regime definidos nessa condição, o que evidencia a necessidade de um controlador PID devidamente sintonizado — tratado nas seções seguintes.
+Em malha aberta, o sistema é estável e atinge o regime permanente suavemente, com y aproximadamente igual a k, sem erro, pois é apenas a resposta da planta ao degrau. Já em malha fechada sem controlador, o sistema diverge. O ganho estático elevado, k próximo de 18, combinado ao atraso de transporte, θ próximo de 0,95 s, leva a malha além do limite de estabilidade, e o sistema passa a oscilar com amplitude crescente. Não há, portanto, tr, ts ou erro de regime definidos nessa condição, o que evidencia a necessidade de um controlador PID devidamente sintonizado, tratado nas seções seguintes.
 
 ### 5. Sintonia do controlador PID
 
