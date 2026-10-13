@@ -44,6 +44,59 @@ As faixas de operação são apresentadas na tabela abaixo:
 
 ## Parte prática do trabalho
 
+### 5. Sintonia do controlador PID
+
+A sintonia do controlador PID foi realizada a partir do modelo FOPDT identificado pelo método de Sundaresan:
+
+| Parâmetro | Valor |
+| --- | --- |
+| k (ganho estático) | 17,9516 RPM/% |
+| τ (constante de tempo) | 7,7765 s |
+| θ (atraso de transporte) | 0,9466 s |
+| θ/τ (fator de incontrolabilidade) | 0,1217 |
+
+Conforme a Tabela 7, o Grupo 6 utilizou as seguintes técnicas de sintonia:
+- Técnica 3: CHR sem Sobrevalor (Tabela 3);
+- Técnica 6: ITAE (Tabela 6).
+
+Os parâmetros obtidos estão apresentados na Tabela 8:
+
+| Técnica | Método | Kp | Ti [s] | Td [s] |
+| --- | --- | --- | --- | --- |
+| 3 | CHR sem Sobrevalor | 0,2746 | 7,7765 | 0,4733 |
+| 6 | ITAE | 0,3220 | 9,9941 | 0,3386 |
+
+Para a simulação, o atraso de transporte foi representado pela aproximação de Padé de ordem 10, e o PID foi implementado com filtro na ação derivativa (N = 10). O sistema em malha fechada foi simulado para um SetPoint de 900 RPM, obtendo os seguintes resultados:
+
+| Método | Tempo de subida (tr) | Tempo de acomodação (ts, 2%) | Overshoot (Mp) | Erro em regime |
+| --- | --- | --- | --- | --- |
+| CHR sem Sobrevalor | 2,40 s | 4,78 s | 0,52% | 0 |
+| ITAE | 0,93 s | 7,42 s | 0,00% | 0 |
+
+![Malha fechada com PID - CHR sem Sobrevalor x ITAE](Sintonia_PID/malha_fechada_pid_grupo6.png)
+
+Os dois controladores tornaram o sistema estável e eliminaram o erro em regime permanente, levando o motor à velocidade desejada de 900 RPM.
+
+### 6. Análise do desempenho
+
+O critério de desempenho definido para o Grupo 6 é o **menor tempo de resposta**.
+
+Entre os métodos aplicados, o **CHR sem Sobrevalor** foi o mais adequado. Ele leva o motor ao regime permanente (faixa de ±2% do SetPoint) em 4,78 s, enquanto o ITAE leva 7,42 s, sendo aproximadamente 36% mais rápido.
+
+O ITAE apresenta menor tempo de subida (0,93 s), pois possui ganho proporcional maior. Porém, após a subida, a velocidade se aproxima do SetPoint lentamente, pois seu tempo integral (Ti ≈ 9,99 s) é maior que a constante de tempo da planta, tornando a ação integral mais fraca.
+
+No CHR sem Sobrevalor, o tempo integral é igual à constante de tempo (Ti = τ). Dessa forma, o zero do controlador cancela o polo da planta e o erro é eliminado rapidamente.
+
+Além disso, o método CHR para o problema servo foi proposto justamente para obter a resposta mais rápida possível sem sobressinal diante de mudanças de SetPoint, o que coincide com o critério de desempenho do grupo. O pequeno overshoot obtido (0,52%) é desprezível.
+
+### Como executar a sintonia
+
+1. Acesse a pasta `Sintonia_PID`.
+
+2. Abra o notebook `sintonia_pid_grupo6.ipynb` no Google Colab ou no Jupyter.
+
+3. Execute as células em ordem. Quando solicitado, faça o upload do arquivo `Motor_G6.mat`, disponível na pasta `dataset`.
+
 ### 7. Interface
 
 Foi desenvolvida uma interface em Python para facilitar a análise do sistema. A interface permite:
