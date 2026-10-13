@@ -89,13 +89,6 @@ No CHR sem Sobrevalor, o tempo integral é igual à constante de tempo (Ti = τ)
 
 Além disso, o método CHR para o problema servo foi proposto justamente para obter a resposta mais rápida possível sem sobressinal diante de mudanças de SetPoint, o que coincide com o critério de desempenho do grupo. O pequeno overshoot obtido (0,52%) é desprezível.
 
-### Como executar a sintonia
-
-1. Acesse a pasta `Sintonia_PID`.
-
-2. Abra o notebook `sintonia_pid_grupo6.ipynb` no Google Colab ou no Jupyter.
-
-3. Execute as células em ordem. Quando solicitado, faça o upload do arquivo `Motor_G6.mat`, disponível na pasta `dataset`.
 
 ### 7. Interface
 
